@@ -9,8 +9,16 @@ class ERA5():
         self.ds = xr.load_dataset(f'datos/download_{year}.grib', engine='cfgrib')
 
     def get_temp(self):
-        print(self.fecha)
         temp = self.ds.sel(time=self.fecha, isobaricInhPa='850').t.values.tolist()
+        return temp
+
+    def get_offset(self, offset):
+        fecha_dt = datetime.datetime.strptime(self.fecha, '%Y-%m-%d')
+        fechas = []
+        for t in ['00', '06', '12', '18']:
+            for d in range(int(offset)):
+                fechas.append(f'{(fecha_dt + datetime.timedelta(days=d)).strftime("%Y-%m-%d")}T{t}')
+        temp = self.ds.sel(time=fechas, isobaricInhPa='850').t.values.tolist()
         return temp
 
     def download(self, year):

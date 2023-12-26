@@ -3,6 +3,8 @@ uniform sampler2D temp_fin;
 uniform sampler2D europa;
 uniform float time;
 uniform float anim_speed;
+uniform float tmin;
+uniform float tmax;
 
 varying vec2 vUv;
 varying vec3 vNormal;
@@ -31,11 +33,14 @@ void main() {
   vec4 tColor0 = texture2D( temp_ini, vUv );
   vec4 tColor6 = texture2D( temp_fin, vUv );
   vec4 euro = texture2D( europa, vUv );
-  float m = mix(tColor0.r, tColor6.r, min(time / anim_speed, 1.));
+  float norm0 = (tColor0.r - 273. - tmin) / (tmax - tmin);
+  float norm6 = (tColor6.r - 273. - tmin) / (tmax - tmin);
+  float fColor0 = ceil(norm0 * 60.) / 60.;
+  float fColor6 = ceil(norm6 * 60.) / 60.;
+  float m = mix(fColor0, fColor6, time);
   vec3 c = color_map(m);
   vec3 final = mix(vec3(1.,1.,1.), c, euro.r);
 
-  //gl_FragColor = vec4(c, 1.);
   gl_FragColor = vec4(final, 1.);
 
 }
