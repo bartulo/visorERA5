@@ -6,19 +6,51 @@
   {{ stylesheet_pack('app') }}
   </head>
   <body>
-    <button id="play" type="button" class="btn btn-success">
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-play" viewBox="0 0 16 16">
-        <path d="M10.804 8 5 4.633v6.734zm.792-.696a.802.802 0 0 1 0 1.392l-6.363 3.692C4.713 12.69 4 12.345 4 11.692V4.308c0-.653.713-.998 1.233-.696z"/>
-      </svg>
-    </button>
-    <button id="stop" type="button" class="btn btn-danger">
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pause" viewBox="0 0 16 16">
-        <path d="M6 3.5a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-1 0V4a.5.5 0 0 1 .5-.5m4 0a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-1 0V4a.5.5 0 0 1 .5-.5"/>
-      </svg>
-    </button>
-    <label for="customRange1" class="form-label">Example range</label>
-    <input id="rangeAnim" type="range" class="form-range" id="customRange1">
-  </body>
+    <header class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow" style="z-index:-1">
+      <p class="navbar-brand col-md-3 col-lg-2 me-0 px-3">Visor datos ERA5</a>
+    </header>
+
+    <div class='container-fluid'>
+      <div class='row'>
+        <div class='col-3'>
+          <div id='datepicker'>Fecha inicio:</div>
+          <div id='datepicker2' style="margin-top: 225px">Fecha fin:</div>
+        </div>
+        <div class='col-9'>
+          <div class='row'>
+            <div class='col-12 d-flex justify-content-center'>
+              <div id='fecha'></div>
+            </div>
+          </div>
+          <div class='row'>
+            <div class='col-12 d-flex justify-content-center'>
+              <div id='containerAnim' style='display:block; width:884px; height: 759px;'></div>
+            </div>
+          </div>
+          <div class='row'>
+            <div class='col-3'></div>
+            <div class='col-6 d-flex justify-content-center'>
+              <input id="rangeAnim" type="range" class="form-range" id="customRange1">
+            </div>
+            <div class='col-3'></div>
+          </div>
+          <div class='row'>
+            <div class='col-12 d-flex justify-content-center'>
+              <button id="play" type="button" class="btn btn-success">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-play" viewBox="0 0 16 16">
+                  <path d="M10.804 8 5 4.633v6.734zm.792-.696a.802.802 0 0 1 0 1.392l-6.363 3.692C4.713 12.69 4 12.345 4 11.692V4.308c0-.653.713-.998 1.233-.696z"/>
+                </svg>
+              </button>
+              <button id="stop" type="button" class="btn btn-danger">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pause" viewBox="0 0 16 16">
+                  <path d="M6 3.5a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-1 0V4a.5.5 0 0 1 .5-.5m4 0a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-1 0V4a.5.5 0 0 1 .5-.5"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </body>
 </html>
 
