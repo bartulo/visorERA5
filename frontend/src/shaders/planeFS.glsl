@@ -9,6 +9,10 @@ uniform float tmin;
 uniform float tmax;
 uniform float stepTemp;
 uniform float interpolation;
+uniform float isoBool;
+uniform float isoDistance;
+uniform float isoBuffer;
+uniform float tempIntBool;
 
 varying vec2 vUv;
 varying vec3 vNormal;
@@ -41,18 +45,19 @@ void main() {
   vec4 euro = texture2D( europa, vUv );
   float norm0 = (tColor0.r - 273. - tmin) / (tmax - tmin);
   float norm6 = (tColor6.r - 273. - tmin) / (tmax - tmin);
-  float fColor0 = ceil(norm0 * stepTemp) / stepTemp;
-  float fColor6 = ceil(norm6 * stepTemp) / stepTemp;
-  float m = mix(fColor0, fColor6, time * interpolation);
-  vec3 c = color_map(m);
+  float tempMix = mix(norm0, norm6, time * interpolation);
+  float tempStep = ceil(tempMix * stepTemp) / stepTemp;
+  float temp = mix(tempMix, tempStep, tempIntBool);
+  vec3 c = color_map(temp);
   vec3 final_ = mix(vec3(1.,1.,1.), c, euro.r);
 
+  float press = mix(pColor0.r, pColor6.r, time * interpolation);
+  vec3 pColorAbove = mix(vec3(0., 0., 0.), vec3(0., 0., 1.), vec3(press - 101300.) / 1000.);
+  vec3 pColorUnder = mix(vec3(0.), vec3(1., 0., 0.), vec3(press - 101300.) * -1. / 1000.);
+  vec3 pColor = pColorAbove + pColorUnder;
+  float isobaras = step(-1. * isoBuffer, (mod(press, isoDistance * 100.)) * -1.);
 
-  float isobaraIni = step(-5., (mod(pColor0.r, 100.)) * -1.);
-  float isobaraFin = step(-5., (mod(pColor6.r, 100.)) * -1.);
-  float i = mix(isobaraIni, isobaraFin, time * interpolation);
-
-  vec3 final = mix(final_, vec3(0.), isobaraIni);
+  vec3 final = mix(final_, pColor, isobaras * isoBool);
 
   gl_FragColor = vec4(final, 1.);
   //gl_FragColor = vec4(i, 0., 0., 1.);

@@ -44,7 +44,6 @@ def api_(year, mes, dia, offset):
     era = ERA5(fecha)
     return render_template('datos.html', datos=era.get_offset(offset))
 
-@app.route("/mapa/<year>/<mes>/<dia>")
-def mapa(year, mes, dia):
-    fecha = f'{year}/{mes}/{dia}'
-    return render_template('mapa.html', fecha=fecha)
+@app.route("/mapa")
+def mapa():
+    return render_template('mapa.html')

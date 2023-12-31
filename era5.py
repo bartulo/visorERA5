@@ -7,7 +7,7 @@ class ERA5():
     def __init__(self, fecha):
         self.fecha = fecha
         year = fecha.split('-')[0]
-        self.ds = xr.load_dataset(f'datos/download_{year}.grib', engine='cfgrib')
+        self.ds = xr.load_dataset(f'datos/temp_{year}.grib', engine='cfgrib')
         self.presion = xr.load_dataset(f'datos/presion_{year}.grib', engine='cfgrib')
 
     def get_temp(self):

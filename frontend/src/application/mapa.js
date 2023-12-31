@@ -27,16 +27,10 @@ class Mapa {
     this.animRange = document.getElementById('rangeAnim');
     this.animRange.value = 0;
     this.fechasDiv = document.getElementById('fecha');
-    const picker = datepicker('#datepicker', {
-      id: 1,
-      alwaysShow: true,
-      position: 'bl',
-      startDay: 1,
-      customDays: ['D', 'L', 'M', 'X', 'J', 'V', 'S'],
-      overlayPlaceholder: 'Introducir año',
-      customMonths: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
-    });
-    const end = datepicker('#datepicker2', {
+    this.mostrarButton = document.getElementById('mostrar');
+    this.containerAnim = document.getElementById('containerAnim');
+
+    const pickerStart = datepicker('#datepicker', {
       id: 1,
       alwaysShow: true,
       position: 'bl',
@@ -44,10 +38,50 @@ class Mapa {
       customDays: ['D', 'L', 'M', 'X', 'J', 'V', 'S'],
       overlayPlaceholder: 'Introducir año',
       customMonths: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'],
-      onSelect: (instance, date) => {
-        console.log(instance.getRange().start.toLocaleDateString());
-        console.log(date);
+      onSelect: (instance) => {
+        if (pickerEnd.dateSelected) {
+          this.mostrarButton.removeAttribute('disabled');
+          const start = instance.getRange().start;
+          const end = instance.getRange().end;
+          const dias = (end.getTime()-start.getTime())/(1000*60*60*24);
+          const year = start.getFullYear();
+          const mes = start.getMonth() + 1;
+          const dia = start.getDate();
+          this.api_url = '/api/' + year + '/' + mes+ '/' + dia + '/' + dias;
+        }
       }
+    });
+    const pickerEnd = datepicker('#datepicker2', {
+      id: 1,
+      alwaysShow: true,
+      position: 'bl',
+      startDay: 1,
+      customDays: ['D', 'L', 'M', 'X', 'J', 'V', 'S'],
+      overlayPlaceholder: 'Introducir año',
+      customMonths: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'],
+      onSelect: (instance) => {
+        if (pickerStart.dateSelected) {
+          this.mostrarButton.removeAttribute('disabled');
+          const start = instance.getRange().start;
+          const end = instance.getRange().end;
+          const dias = (end.getTime()-start.getTime())/(1000*60*60*24) + 1;
+          const year = start.getFullYear();
+          const mes = start.getMonth() + 1;
+          const dia = start.getDate();
+          this.api_url = '/api/' + year + '/' + mes+ '/' + dia + '/' + dias;
+
+        }
+    
+      }
+    });
+
+    this.mostrarButton.addEventListener('click', () => {
+      if (this.containerAnim.children.length > 0) {
+        this.containerAnim.removeChild(this.containerAnim.children[0]);
+      }
+      this.get_datos().then(() => {
+        this.init();
+      });
     });
 
     this.playButton.addEventListener('click', () => {
@@ -62,17 +96,15 @@ class Mapa {
       this.clock.stop();
     });
 
-    this.api_url = window.location.pathname.replace('mapa', 'api');
     this.planeVS = require('../shaders/planeVS.glsl');
     this.planeFS = require('../shaders/planeFS.glsl');
     this.europa_img = require('../../vendors/images/europa.png');
   }
 
   async get_datos() {
-    const response = await fetch(this.api_url + '/10');
+    const response = await fetch(this.api_url);
     this.datos = await response.json();
     this.fechas = await this.datos.time;
-    console.log(this.fechas);
     this.width = this.datos.temp[0].length;
     this.height = this.datos.temp[0][0].length;
     this.temp_textures = [];
@@ -92,7 +124,6 @@ class Mapa {
     await Promise.all(this.datos.presion.map(async (element) => {
       const tarray = element.flat();
       const tarray32 = new Float32Array(tarray);
-      console.log(tarray32);
       const texture = new DataTexture(tarray32, this.height, this.width, RedFormat, FloatType);
       texture.internalFormat = 'R32F';
       texture.magFilter = LinearFilter;
@@ -100,6 +131,8 @@ class Mapa {
       texture.needsUpdate = true;
       this.press_textures.push(texture);
     }));
+
+
   }
 
   init() {
@@ -107,8 +140,12 @@ class Mapa {
       tmax: 30,
       tmin: 0,
       speed: 1,
+      tempIntBool: false,
       step: 60,
-      interpolation: true
+      interpolation: true,
+      isoBool: false,
+      isoDistance: 5,
+      isoBuffer: 20
     };
     const pane = new Pane();
     this.tmaxPane = pane.addBinding(
@@ -123,6 +160,8 @@ class Mapa {
       PARAMS, 'speed',
       {min: 0.1, max: 5, step:0.1}
     );
+    this.tempIntBoolPane = pane.addBinding(
+      PARAMS, 'tempIntBool');
     this.stepPane = pane.addBinding(
       PARAMS, 'step',
       {min: 2, max: 80, step:1}
@@ -130,6 +169,17 @@ class Mapa {
     this.interpolationPane = pane.addBinding(
       PARAMS, 'interpolation');
 
+    this.isoBoolPane = pane.addBinding(
+      PARAMS, 'isoBool');
+
+    this.isoDistancePane = pane.addBinding(
+      PARAMS, 'isoDistance',
+      {min: 1, max: 5, step:1}
+    );
+    this.isoBufferPane = pane.addBinding(
+      PARAMS, 'isoBuffer',
+      {min: 5, max: 20, step:1}
+    );
     this.animRange.min = 0;
     this.animRange.max = this.anim_speed * (this.temp_textures.length - 1);
     this.animRange.step = 0.1;
@@ -148,22 +198,28 @@ class Mapa {
     this.camera = new PerspectiveCamera(75, this.height / this.width, 0.1, 1000);
     this.renderer = new WebGLRenderer({antialias: true});
     this.renderer.setSize(680 * 1.3 , 680 * 1.3  * this.width / this.height);
-    document.getElementById('containerAnim').appendChild(this.renderer.domElement);
+    this.containerAnim.appendChild(this.renderer.domElement);
 
     this.camera.position.z = 355;
     const ambientLight = new AmbientLight(0xffffff, 5.9);
     this.scene.add(ambientLight);
 
-    this.europa = new TextureLoader().load(this.europa_img);
-    this.europa.needsUpdate = true;
+    this.europa = new TextureLoader().load(this.europa_img, () => {
+      this.europa.needsUpdate = true;
+      this.renderAnim();
+    });
 
     const uniforms = {
       tmin: {type: 'f', value: this.tmin},
       tmax: {type: 'f', value: this.tmax},
       time: {type: 'f', value: this.time},
       anim_speed: {type: 'f', value: this.anim_speed},
+      tempIntBool: {type: 'f', value: 0},
       stepTemp: {type: 'f', value: 60},
       interpolation: {type: 'f', value: 1},
+      isoBool: {type: 'f', value: 0},
+      isoDistance: {type: 'f', value: 5},
+      isoBuffer: {type: 'f', value: 20},
       europa: {type: 't', value: this.europa},
       temp_ini: {type: 't', value: this.temp_textures[0]},
       temp_fin: {type: 't', value: this.temp_textures[1]},
@@ -204,8 +260,18 @@ class Mapa {
       this.perc = this.clock.elapsedTime / (this.anim_speed * (this.temp_textures.length -1));
     });
 
+    this.tempIntBoolPane.on('change', (el) => {
+      if (el.value == true) {
+        this.material.uniforms.tempIntBool.value = 1;
+      } else {
+        this.material.uniforms.tempIntBool.value = 0;
+      }
+
+      this.renderAnim();
+    });
+
     this.stepPane.on('change', (el) => {
-      this.material.uniforms.step.value = parseFloat(el.value);
+      this.material.uniforms.stepTemp.value = parseFloat(el.value);
       this.renderAnim();
     });
 
@@ -216,6 +282,26 @@ class Mapa {
         this.material.uniforms.interpolation.value = 0;
       }
 
+      this.renderAnim();
+    });
+
+    this.isoBoolPane.on('change', (el) => {
+      if (el.value == true) {
+        this.material.uniforms.isoBool.value = 1;
+      } else {
+        this.material.uniforms.isoBool.value = 0;
+      }
+
+      this.renderAnim();
+    });
+
+    this.isoDistancePane.on('change', (el) => {
+      this.material.uniforms.isoDistance.value = parseFloat(el.value);
+      this.renderAnim();
+    });
+    
+    this.isoBufferPane.on('change', (el) => {
+      this.material.uniforms.isoBuffer.value = parseFloat(el.value);
       this.renderAnim();
     });
 
@@ -251,10 +337,3 @@ class Mapa {
 }
 
 const mapa = new Mapa();
-document.body.addEventListener('click', () => {
-  console.log(mapa.clock.elapsedTime);
-  console.log(mapa.perc);
-});
-mapa.get_datos().then(() => {
-  mapa.init();
-});
